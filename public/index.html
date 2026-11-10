@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Broadcaster - WebRTC</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="header-container">
+      <a href="index.html" class="brand-logo">
+        <div class="logo-icon"></div>
+        <span>WebRTC Broadcast</span>
+      </a>
+      <nav class="header-nav">
+        <a href="index.html" class="nav-link active">📹 Broadcaster</a>
+        <a href="viewer.html" target="_blank" class="nav-link">📺 Viewer ↗</a>
+        <a href="meeting.html" target="_blank" class="nav-link">👥 Meeting ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-wrapper" style="max-width: 680px; padding: 28px 16px;">
+    <!-- Judul -->
+    <div
+      style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h1 style="font-size: 1.55rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+          📹 Broadcaster
+        </h1>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 4px;">
+          Pilih file video dari komputer Anda, lalu siarkan ke Viewer secara real-time.
+        </p>
+      </div>
+      <div>
+        <span class="status-pill ready" id="statusBadge">
+          <span class="pulsing-dot"></span>
+          <span id="statusText">Menunggu File Video</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Tab Pilihan Sumber Siaran -->
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+      <button id="tabCameraBtn" class="btn-primary"
+        style="flex: 1; justify-content: center; padding: 12px; font-weight: 700; border-radius: 10px; background: #2563eb;">
+        📷 Kamera Langsung (Webcam)
+      </button>
+      <button id="tabFileBtn" class="btn-icon"
+        style="flex: 1; justify-content: center; padding: 12px; font-weight: 700; border-radius: 10px; background: #1e293b;">
+        📁 File Video Lokal
+      </button>
+    </div>
+
+    <!-- Panel Sumber Kamera Langsung -->
+    <div id="cameraSourcePanel" class="glass-panel" style="padding: 20px; margin-bottom: 20px;">
+      <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+        <label style="font-weight: 700; font-size: 0.88rem; color: #38bdf8;">
+          📷 SIARAN KAMERA WEBCAM
+        </label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label for="cameraDeviceSelect" style="font-size: 0.8rem; color: var(--text-muted);">Pilih Kamera:</label>
+          <select id="cameraDeviceSelect"
+            style="background: #0f172a; color: #fff; border: 1px solid #334155; border-radius: 6px; padding: 6px 10px; font-size: 0.8rem;">
+            <option value="">Memuat kamera...</option>
+          </select>
+        </div>
+      </div>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
+        Nyalakan kamera Anda untuk mulai menyiarkan rekaman video langsung ke viewer yang memasukkan token.
+      </p>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-primary" id="startCamBtn"
+          style="flex: 1; justify-content: center; padding: 11px; font-size: 0.9rem;">
+          <span>📹</span> Buka &amp; Siarkan Kamera
+        </button>
+        <button class="btn-icon" id="toggleMicBtn" style="padding: 11px 16px; font-size: 0.85rem;" disabled>
+          <span id="micIconText">🎙️</span> Mic
+        </button>
+      </div>
+    </div>
+
+    <!-- Upload File Video -->
+    <div id="fileSourcePanel" class="glass-panel" style="padding: 20px; margin-bottom: 20px; display: none;">
+      <label style="display: block; font-weight: 700; font-size: 0.88rem; color: #a5b4fc; margin-bottom: 12px;">
+        🎬 PILIH FILE VIDEO
+      </label>
+
+      <!-- Drop Zone -->
+      <div id="dropZone"
+        style="border: 2px dashed rgba(99,102,241,0.4); border-radius: 12px; padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.25s ease; background: rgba(99,102,241,0.05);">
+        <div style="font-size: 2.5rem; margin-bottom: 8px;">🎥</div>
+        <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 12px;">
+          Seret &amp; lepas file video ke sini, atau klik tombol di bawah
+        </p>
+        <p style="font-size: 0.78rem; color: var(--text-dim);">Format didukung: MP4, WebM, MKV, AVI, MOV</p>
+        <input type="file" id="videoFileInput" accept="video/*" style="display: none;">
+        <button class="btn-primary" id="pickFileBtn" style="margin-top: 14px; padding: 10px 22px; font-size: 0.9rem;">
+          <span>📂</span> Pilih File Video
+        </button>
+      </div>
+
+      <!-- Info file yang dipilih -->
+      <div id="fileInfo"
+        style="display: none; margin-top: 12px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; display: none; align-items: center; gap: 10px;">
+        <span style="font-size: 1.3rem;">✅</span>
+        <div>
+          <div id="fileName" style="font-weight: 700; color: #fff;"></div>
+          <div id="fileSize" style="color: var(--text-muted); font-size: 0.78rem;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Video Lokal (Player Broadcaster) -->
+    <div class="glass-panel" style="padding: 16px; margin-bottom: 20px;">
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; font-weight: 600;">
+        🖥️ PREVIEW VIDEO (TAMPILAN BROADCASTER)
+      </div>
+      <div id="videoStage"
+        style="aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #050811; position: relative; display: flex; align-items: center; justify-content: center;">
+        <!-- Placeholder sebelum file dipilih -->
+        <div id="videoPlaceholder" style="text-align: center; color: var(--text-dim);">
+          <div style="font-size: 3rem; margin-bottom: 8px;">🎬</div>
+          <p style="font-size: 0.85rem;">Belum ada file video dipilih</p>
+        </div>
+
+        <!-- Video element lokal (akan di-captureStream dan dikirim ke viewer) -->
+        <video id="localVideo" controls loop
+          style="width: 100%; height: 100%; object-fit: contain; display: none; background: #000; border-radius: 12px;">
+        </video>
+
+        <!-- Overlay tag -->
+        <div class="video-overlay-top" id="videoOverlay" style="display: none;">
+          <span class="overlay-tag" style="background: rgba(239, 68, 68, 0.85);">
+            <span class="pulsing-dot" style="background: #fff; box-shadow: 0 0 8px #fff;"></span>
+            VIDEO FILE
+          </span>
+          <span class="overlay-tag" id="sourceTag">🎥 File</span>
+        </div>
+      </div>
+
+      <!-- Kontrol broadcast -->
+      <div style="display: flex; gap: 10px; margin-top: 14px;">
+        <button class="btn-primary" id="startBroadcastBtn" disabled
+          style="flex: 1; justify-content: center; padding: 11px; font-size: 0.9rem; opacity: 0.5;">
+          <span>📡</span> Mulai Siarkan ke Viewer
+        </button>
+        <button class="btn-icon" id="stopBroadcastBtn" disabled
+          style="padding: 11px 16px; font-size: 0.82rem; opacity: 0.5;">
+          <span>⏹️</span> Stop
+        </button>
+      </div>
+    </div>
+
+    <!-- Token Siaran -->
+    <div class="glass-panel" style="padding: 20px; margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-weight: 700; font-size: 0.88rem; color: #a5b4fc;">🔑 TOKEN SIARAN (ROOM ID)</span>
+        <span style="font-size: 0.78rem; color: var(--text-dim);" id="viewerCount">0 Penonton Terhubung</span>
+      </div>
+      <div class="token-container">
+        <p id="token" style="font-size: 1.85rem; letter-spacing: 3px; font-weight: 700; padding: 12px;">Membuat Token...
+        </p>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 14px;">
+        <button class="btn-primary" id="copyTokenBtn"
+          style="flex: 1; justify-content: center; padding: 12px; font-size: 0.95rem;">
+          <span>📋</span> Salin Token Siaran
+        </button>
+        <a href="viewer.html" target="_blank" class="btn-primary"
+          style="flex: 1; justify-content: center; padding: 12px; font-size: 0.95rem; text-decoration: none; background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);">
+          <span>📺</span> Buka Viewer ↗
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast-alert" id="toastAlert">
+    <span id="toastIcon">✅</span>
+    <span id="toastMsg">Pesan</span>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="app-broadcaster.js"></script>
+</body>
+
+</html>

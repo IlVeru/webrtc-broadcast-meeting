@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Meeting (Conference)</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Header Bar */
+    .meet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+    }
+    .meet-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge-room {
+      background: #3b82f6;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+    }
+
+    /* Modal / Lobby Form */
+    #lobbyModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .lobby-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 32px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .lobby-card h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    .lobby-card p {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      text-align: left;
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+    .form-group input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 14px;
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      color: white;
+      font-size: 0.95rem;
+    }
+    .btn-join {
+      width: 100%;
+      padding: 12px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-join:hover {
+      background: #1d4ed8;
+    }
+
+    /* Video Grid Area */
+    .video-grid-container {
+      flex: 1;
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-auto-rows: 1fr;
+      align-content: center;
+      overflow-y: auto;
+    }
+
+    /* Video Tile */
+    .video-card {
+      position: relative;
+      background: #1e293b;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 220px;
+      aspect-ratio: 16 / 9;
+    }
+    .video-card video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .video-card.local video {
+      transform: scaleX(-1); /* Efek cermin untuk video sendiri */
+    }
+    .video-label {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(4px);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Bottom Control Bar */
+    .meet-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: #1e293b;
+      border-top: 1px solid #334155;
+    }
+    .control-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: none;
+      background: #334155;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .control-btn:hover {
+      background: #475569;
+    }
+    .control-btn.off {
+      background: #ef4444;
+    }
+    .control-btn.leave {
+      background: #dc2626;
+      width: auto;
+      border-radius: 25px;
+      padding: 0 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Modal Masuk Room / Lobby -->
+  <div id="lobbyModal">
+    <div class="lobby-card">
+      <h2>Video Conference</h2>
+      <p>Masuk ke room meeting untuk saling terhubung video & suara langsung.</p>
+      <div class="form-group">
+        <label>Nama Anda</label>
+        <input type="text" id="nameInput" placeholder="Misal: Rakha" value="">
+      </div>
+      <div class="form-group">
+        <label>Kode Room</label>
+        <input type="text" id="roomInput" placeholder="Misal: meeting-1" value="room-meeting">
+      </div>
+      <button class="btn-join" id="joinBtn">Gabung Meeting</button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="meet-header">
+    <div class="meet-title">
+      📹 Video Conference
+      <span class="badge-room" id="roomBadge">Room: -</span>
+    </div>
+    <div style="font-size: 0.85rem; color: #94a3b8;">
+      Peserta: <b id="participantCount" style="color: #38bdf8;">1</b>
+    </div>
+  </header>
+
+  <!-- Video Grid -->
+  <main class="video-grid-container" id="videoGrid">
+    <!-- Video Lokal -->
+    <div class="video-card local" id="localCard">
+      <video id="localVideo" autoplay playsinline muted></video>
+      <div class="video-label">
+        <span>🎤</span>
+        <span id="localNameLabel">Anda</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- Kontrol Bawah -->
+  <footer class="meet-controls">
+    <button class="control-btn" id="micBtn" title="Mute/Unmute Mic">🎙️</button>
+    <button class="control-btn" id="camBtn" title="Nyalakan/Matikan Kamera">📷</button>
+    <button class="control-btn leave" id="leaveBtn">Keluar</button>
+  </footer>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app-meeting.js"></script>
+</body>
+</html>
+
